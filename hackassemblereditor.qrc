@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="nand2tetris.png">images/nand2tetris-banner.png</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="new.png">images/document-new.png</file>
+        <file alias="open.png">images/document-open.png</file>
+        <file alias="save.png">images/document-save.png</file>
+        <file alias="start.png">images/media-playback-start.png</file>
+        <file alias="pause.png">images/media-playback-pause.png</file>
+        <file alias="next.png">images/media-skip-forward.png</file>
+        <file alias="translate.png">images/go-next.png</file>
+        <file alias="reset.png">images/process-stop.png</file>
+        <file alias="copy.png">images/edit-copy.png</file>
+    </qresource>
+</RCC>
