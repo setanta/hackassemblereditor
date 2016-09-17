@@ -65,6 +65,8 @@ void HackAssemblerEditor::closeEvent(QCloseEvent *event)
     settings.setValue("editor/geometry", saveGeometry());
     settings.setValue("assembler/speed", ui->speedSlider->value());
     settings.sync();
+
+    ui->translatedCode->model()->disconnect();
     event->accept();
 }
 
