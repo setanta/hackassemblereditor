@@ -21,16 +21,19 @@ public:
     explicit HackAssemblerEditor(QWidget *parent = 0);
     ~HackAssemblerEditor();
 
+protected:
+    virtual void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+
 private slots:
     void on_action_NewAsmSource_triggered();
     void on_action_OpenAsmSource_triggered();
     void on_action_SaveAsmSource_triggered();
+    void on_action_SaveAsmSourceAs_triggered();
     void on_action_OpenCmpBinary_triggered();
     void on_action_SaveTranslatedBinary_triggered();
 
     void on_action_Exit_triggered();
     void on_action_About_triggered();
-    void handleQuit();
 
     void on_action_RunPauseTranslation_triggered(bool checked);
     void on_action_RunPauseTranslation_toggled(bool checked);
@@ -73,6 +76,10 @@ private:
     void updateBinDiffLine(int line);
     void clearReferenceCodeBinDiff();
 
+    bool handleSourceSaving();
+    bool saveSourceAs();
+    bool saveSource(const QString& filename);
+
     static const int DEFAULT_SPEED;
 
     Ui::MainWindow *ui;
@@ -80,7 +87,6 @@ private:
 
     AssemblerController* m_asmController;
     HackSyntaxHighlighter *m_hackSyntaxHighlighter;
-    bool m_sourceModified;
 };
 
 #endif // HACKASSEMBLEREDITOR_H

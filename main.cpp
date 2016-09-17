@@ -5,8 +5,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    QCoreApplication::setOrganizationName("Nand2Tetris");
-    QCoreApplication::setApplicationName("HackAssemblerEditor");
+    QGuiApplication::setOrganizationName("github.com/setanta");
+    QGuiApplication::setApplicationName("HackAssemblyEditor");
 
     HackAssemblerEditor w;
     w.show();

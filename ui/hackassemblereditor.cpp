@@ -1,6 +1,8 @@
 #include <QDebug>
 #include <QClipboard>
 #include <QFileDialog>
+#include <QGuiApplication>
+#include <QMessageBox>
 #include <QScrollBar>
 #include <QSettings>
 #include <QTextStream>
@@ -13,15 +15,12 @@ const int HackAssemblerEditor::DEFAULT_SPEED = 2;
 HackAssemblerEditor::HackAssemblerEditor(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_about(NULL),
-    m_sourceModified(false)
+    m_about(NULL)
 {
     ui->setupUi(this);
 
     m_hackSyntaxHighlighter = new HackSyntaxHighlighter(ui->sourceTextEdit->document());
 
-    connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
-            this, &HackAssemblerEditor::handleQuit);
     connect(ui->sourceTextEdit, &QPlainTextEdit::cursorPositionChanged,
             this, &HackAssemblerEditor::cursorPositionChanged);
 
@@ -41,12 +40,13 @@ HackAssemblerEditor::HackAssemblerEditor(QWidget *parent) :
     connect(ui->referenceCode->verticalScrollBar(), &QScrollBar::valueChanged,
             this, &HackAssemblerEditor::referenceCodeScrollMoved);
 
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-
+    QSettings settings;
     openSourceFile(settings.value("editor/asmSrcPath", QString()).toString());
     openReferenceBinaryFile(settings.value("editor/refBinPath", QString()).toString());
     ui->speedSlider->setValue(settings.value("assembler/speed", HackAssemblerEditor::DEFAULT_SPEED).toInt());
-    restoreGeometry(settings.value("app/geometry").toByteArray());
+    restoreGeometry(settings.value("editor/geometry").toByteArray());
+
+    ui->sourceTextEdit->setFocus();
 }
 
 HackAssemblerEditor::~HackAssemblerEditor()
@@ -54,39 +54,74 @@ HackAssemblerEditor::~HackAssemblerEditor()
     delete ui;
 }
 
+void HackAssemblerEditor::closeEvent(QCloseEvent *event)
+{
+    if (ui->sourceTextEdit->document()->isModified() && !handleSourceSaving()) {
+        event->ignore();
+        return;
+    }
+
+    QSettings settings;
+    settings.setValue("editor/geometry", saveGeometry());
+    settings.setValue("assembler/speed", ui->speedSlider->value());
+    settings.sync();
+    event->accept();
+}
+
 void HackAssemblerEditor::on_action_NewAsmSource_triggered()
 {
+    if (ui->sourceTextEdit->document()->isModified() && !handleSourceSaving())
+        return;
+
     ui->sourceTextEdit->clear();
     ui->sourceTextEdit->setDocumentTitle(QString());
-    ui->asmFileLabel->setText(QString());
+
+    QGuiApplication::setApplicationDisplayName(QString());
+    setWindowModified(false);
+
     m_asmController->setState(AssemblerController::NO_SOURCE);
+
+    QSettings settings;
+    settings.remove("editor/asmSrcPath");
+    settings.sync();
 }
 
 void HackAssemblerEditor::on_action_OpenAsmSource_triggered()
 {
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-    QString srcDir = settings.value("editor/srcDir", QDir::homePath()).toString();
+    QSettings settings;
+    QString asmSrcDir = settings.value("editor/asmSrcDir", QDir::homePath()).toString();
 
     QString filename = QFileDialog::getOpenFileName(this,
                                                     tr("Open Hack Assembly source"),
-                                                    srcDir,
+                                                    asmSrcDir,
                                                     tr("Hack Assembly Files (*.asm);;All Files (*)"));
     QFileInfo fileInfo = openSourceFile(filename);
     if (fileInfo.exists()) {
-        settings.setValue("editor/srcDir", fileInfo.absolutePath());
+        settings.setValue("editor/asmSrcPath", fileInfo.absoluteFilePath());
+        settings.setValue("editor/asmSrcDir", fileInfo.absolutePath());
         settings.sync();
     }
 }
 
 void HackAssemblerEditor::on_action_SaveAsmSource_triggered()
 {
-    qDebug() << "Save Hack Assembly source.";
-    m_sourceModified = false;
+    if (!ui->sourceTextEdit->document()->isModified())
+        return;
+
+    if (ui->sourceTextEdit->documentTitle().isEmpty())
+        saveSourceAs();
+    else
+        saveSource(ui->sourceTextEdit->documentTitle());
+}
+
+void HackAssemblerEditor::on_action_SaveAsmSourceAs_triggered()
+{
+    saveSourceAs();
 }
 
 void HackAssemblerEditor::on_action_OpenCmpBinary_triggered()
 {
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
+    QSettings settings;
     QString binRefDir = settings.value("editor/binRefDir", QDir::homePath()).toString();
 
     QString filename = QFileDialog::getOpenFileName(this,
@@ -104,7 +139,7 @@ void HackAssemblerEditor::on_action_OpenCmpBinary_triggered()
 
 void HackAssemblerEditor::on_action_SaveTranslatedBinary_triggered()
 {
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
+    QSettings settings;
     QString binOutDir = settings.value("editor/binOutDir", QDir::homePath()).toString();
 
     QString filename = QFileDialog::getSaveFileName(this,
@@ -116,10 +151,8 @@ void HackAssemblerEditor::on_action_SaveTranslatedBinary_triggered()
     QFile file(filename);
     file.open(QFile::WriteOnly | QFile::Text);
     QTextStream outStream(&file);
-    for (int i = 0; i < ui->translatedCode->count(); i++) {
+    for (int i = 0; i < ui->translatedCode->count(); i++)
         outStream << ui->translatedCode->item(i)->text().replace(" ", "") << "\n";
-    }
-    file.close();
 
     QFileInfo fileInfo(filename);
     settings.setValue("editor/binOutDir", fileInfo.absolutePath());
@@ -155,16 +188,6 @@ void HackAssemblerEditor::cursorPositionChanged()
     int translatedLineNumber = m_asmController->binaryLineForSourceLine(selection.cursor.blockNumber());
     if (translatedLineNumber != ui->translatedCode->currentRow())
         ui->translatedCode->setCurrentRow(translatedLineNumber);
-}
-
-void HackAssemblerEditor::handleQuit()
-{
-    // [TODO] Document is modified: save it?
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-    settings.setValue("editor/asmSrcPath", ui->sourceTextEdit->documentTitle());
-    settings.setValue("assembler/speed", ui->speedSlider->value());
-    settings.setValue("app/geometry", saveGeometry());
-    settings.sync();
 }
 
 void HackAssemblerEditor::on_action_RunPauseTranslation_triggered(bool checked)
@@ -205,7 +228,7 @@ void HackAssemblerEditor::on_speedSlider_valueChanged(int value)
 
 void HackAssemblerEditor::on_sourceTextEdit_textChanged()
 {
-    m_sourceModified = true;
+    setWindowModified(ui->sourceTextEdit->document()->isModified());
     m_asmController->setSourceCode(ui->sourceTextEdit->toPlainText());
 }
 
@@ -278,18 +301,21 @@ QFileInfo HackAssemblerEditor::openSourceFile(const QString &filename)
 {
 
     QFileInfo fileInfo(filename);
+    if (!fileInfo.exists())
+        return fileInfo;
 
-    if (fileInfo.exists()) {
-        QFile file(filename);
-        file.open(QFile::ReadOnly | QFile::Text);
-        QTextStream sourceStream(&file);
+    QFile file(filename);
+    file.open(QFile::ReadOnly | QFile::Text);
+    QTextStream sourceStream(&file);
 
-        ui->sourceTextEdit->setPlainText(sourceStream.readAll());
-        ui->sourceTextEdit->setDocumentTitle(fileInfo.absoluteFilePath());
-        ui->asmFileLabel->setText(fileInfo.fileName());
+    ui->sourceTextEdit->setPlainText(sourceStream.readAll());
+    ui->sourceTextEdit->setDocumentTitle(fileInfo.absoluteFilePath());
 
-        m_asmController->setSourceCode(ui->sourceTextEdit->toPlainText());
-    }
+    QGuiApplication::setApplicationDisplayName(fileInfo.fileName());
+    setWindowModified(ui->sourceTextEdit->document()->isModified());
+
+    m_asmController->setSourceCode(ui->sourceTextEdit->toPlainText());
+
     return fileInfo;
 }
 
@@ -402,4 +428,66 @@ void HackAssemblerEditor::on_copyTranslatedButton_clicked()
 void HackAssemblerEditor::on_copyReferenceButton_clicked()
 {
     copyListWidgetContentsToClipboard(ui->referenceCode);
+}
+
+bool HackAssemblerEditor::handleSourceSaving()
+{
+    if (!ui->sourceTextEdit->document()->isModified())
+        return false;
+
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::warning(this,
+                                 tr("Unsaved Modifications"),
+                                 tr("Save source code changes?\n"
+                                    "If you don't save, the changes will be permanently lost."),
+                                 QMessageBox::Discard|QMessageBox::Cancel|QMessageBox::Save);
+    switch (reply) {
+    case QMessageBox::Save:
+        if (ui->sourceTextEdit->documentTitle().isEmpty())
+            return saveSourceAs();
+        return saveSource(ui->sourceTextEdit->documentTitle());
+    case QMessageBox::Cancel:
+        return false;
+    default:
+        break;
+    }
+
+    return true;
+}
+
+bool HackAssemblerEditor::saveSourceAs()
+{
+    QSettings settings;
+    QString asmSrcDir = settings.value("editor/asmSrcDir", QDir::homePath()).toString();
+
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    tr("Save Hack Assembly source as..."),
+                                                    asmSrcDir,
+                                                    tr("Hack Assembly Files (*.asm);;All Files (*)"));
+    if (filename.isEmpty())
+        return false;
+
+    QFileInfo fileInfo(filename);
+    if (!saveSource(fileInfo.absoluteFilePath()))
+        return false;
+
+    ui->sourceTextEdit->setDocumentTitle(fileInfo.absoluteFilePath());
+    QGuiApplication::setApplicationDisplayName(fileInfo.fileName());
+    setWindowModified(false);
+
+    settings.setValue("editor/asmSrcPath", fileInfo.absoluteFilePath());
+    settings.sync();
+    return true;
+}
+
+bool HackAssemblerEditor::saveSource(const QString& filename)
+{
+    QFile file(filename);
+    file.open(QFile::WriteOnly | QFile::Text);
+    QTextStream outStream(&file);
+    outStream << ui->sourceTextEdit->toPlainText();
+
+    ui->sourceTextEdit->document()->setModified(false);
+    setWindowModified(false);
+    return true;
 }
