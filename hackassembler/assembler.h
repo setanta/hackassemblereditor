@@ -29,7 +29,12 @@ public:
     int binaryLineForSourceLine(int sourceLineNumber);
 
     void parse();
-    void translate();
+    void translateAll();
+    void translateNextLine();
+    inline bool hasMoreLines() const { return m_parser.hasMoreLines(); }
+
+    void clearParsingData();
+    void clearTranslationData();
 
 private:
 

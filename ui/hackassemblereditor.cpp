@@ -1,4 +1,3 @@
-#include <QDebug>
 #include <QClipboard>
 #include <QFileDialog>
 #include <QGuiApplication>
@@ -217,7 +216,7 @@ void HackAssemblerEditor::on_action_ResetTranslation_triggered()
 
 void HackAssemblerEditor::on_action_TranslateAll_triggered()
 {
-    ui->translatedCode->clear();
+    m_asmController->reset();
     m_asmController->translateAll();
 }
 
@@ -236,39 +235,51 @@ void HackAssemblerEditor::on_sourceTextEdit_textChanged()
 
 void HackAssemblerEditor::asmControllerStateChanged(AssemblerController::State newState)
 {
-    bool hasSource = true;
-
     switch (newState) {
     case AssemblerController::NO_SOURCE:
-        qDebug() << "State: NO_SOURCE";
-        hasSource = false;
-    case AssemblerController::RESET:
-        qDebug() << "State: RESET";
         ui->translatedCode->clear();
-    case AssemblerController::FINISHED:
-        qDebug() << "State: FINISHED";
         ui->runPauseButton->setChecked(false);
-        ui->runPauseButton->setEnabled(hasSource);
-        ui->nextButton->setEnabled(hasSource && newState != AssemblerController::FINISHED);
-        if (newState == AssemblerController::FINISHED && ui->translatedCode->count() == 0) {
+        ui->runPauseButton->setEnabled(false);
+        ui->nextButton->setEnabled(false);
+        ui->resetButton->setEnabled(false);
+        break;
+
+    case AssemblerController::RESET:
+        ui->translatedCode->clear();
+        ui->runPauseButton->setChecked(false);
+        ui->runPauseButton->setEnabled(true);
+        ui->nextButton->setEnabled(true);
+        ui->resetButton->setEnabled(false);
+        break;
+
+    case AssemblerController::FINISHED:
+        ui->runPauseButton->setChecked(false);
+        ui->runPauseButton->setEnabled(true);
+        ui->nextButton->setEnabled(false);
+        ui->resetButton->setEnabled(true);
+
+        // FINISHED after RESET: translate all command.
+        if (ui->translatedCode->count() == 0) {
             for (const QString &line : m_asmController->binaryCode())
                 addLineToListWidget(ui->translatedCode, line);
             int selectedSourceLine = ui->sourceTextEdit->textCursor().blockNumber();
             ui->translatedCode->setCurrentRow(m_asmController->binaryLineForSourceLine(selectedSourceLine));
         }
-        ui->resetButton->setEnabled(hasSource && ui->translatedCode->count() > 0);
         break;
 
     case AssemblerController::PAUSED:
-        qDebug() << "State: PAUSED";
+        ui->resetButton->setEnabled(true);
         ui->runPauseButton->setChecked(false);
+        break;
 
     case AssemblerController::RUNNING:
-        qDebug() << "State: RUNNING";
         ui->resetButton->setEnabled(true);
+        ui->runPauseButton->setChecked(true);
+        break;
+
+    default:
         break;
     }
-
     ui->action_RunPauseTranslation->setChecked(ui->runPauseButton->isChecked());
     ui->action_RunPauseTranslation->setEnabled(ui->runPauseButton->isEnabled());
     ui->action_StepTranslation->setEnabled(ui->nextButton->isEnabled());

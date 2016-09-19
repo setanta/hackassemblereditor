@@ -62,8 +62,6 @@ private:
     QTimer *m_timer;
     Speed m_speed;
     State m_state;
-
-    int m_currentLine;
 };
 
 #endif // ASSEMBLERCONTROLLER_H

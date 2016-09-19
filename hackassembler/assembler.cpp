@@ -4,11 +4,22 @@
 void Assembler::setSourceCode(const QString& asmSource)
 {
     m_parser.setAsmSource(asmSource.split(QRegExp("\n|\r\n|\r")));
+    clearParsingData();
+}
+
+void Assembler::clearParsingData()
+{
+    clearTranslationData();
     m_symbolTable.clear();
+    m_errors.clear();
+}
+
+void Assembler::clearTranslationData()
+{
+    m_parser.reset();
     m_binaryCode.clear();
     m_srcToBinLines.clear();
     m_binToSrcLines.clear();
-    m_errors.clear();
 }
 
 int Assembler::sourceLineForBinaryLine(int binaryLineNumber)
@@ -23,11 +34,7 @@ int Assembler::binaryLineForSourceLine(int sourceLineNumber)
 
 void Assembler::parse()
 {
-    m_symbolTable.clear();
-    m_srcToBinLines.clear();
-    m_binToSrcLines.clear();
-    m_errors.clear();
-
+    clearParsingData();
     uint memoryAddress = 0;
 
     while (m_parser.hasMoreLines()) {
@@ -53,37 +60,38 @@ void Assembler::parse()
     m_parser.reset();
 }
 
-void Assembler::translate()
+void Assembler::translateAll()
 {
-    m_binaryCode.clear();
-    m_srcToBinLines.clear();
-    m_binToSrcLines.clear();
+    clearTranslationData();
+    while (m_parser.hasMoreLines())
+        translateNextLine();
+}
 
-    while (m_parser.hasMoreLines()) {
-        m_parser.advance();
+void Assembler::translateNextLine()
+{
+    m_parser.advance();
 
-        uint address;
-        switch (m_parser.commandType()) {
-        case Parser::C_COMMAND:
-            m_srcToBinLines[m_parser.currentLine()] = m_binaryCode.length();
-            m_binToSrcLines[m_binaryCode.length()] = m_parser.currentLine();
-            m_binaryCode.append("111" + Code::comp(m_parser.comp()) +
-                                        Code::dest(m_parser.dest()) +
-                                        Code::jump(m_parser.jump()));
-            break;
+    uint address;
+    switch (m_parser.commandType()) {
+    case Parser::C_COMMAND:
+        m_srcToBinLines[m_parser.currentLine()] = m_binaryCode.length();
+        m_binToSrcLines[m_binaryCode.length()] = m_parser.currentLine();
+        m_binaryCode.append("111" + Code::comp(m_parser.comp()) +
+                                    Code::dest(m_parser.dest()) +
+                                    Code::jump(m_parser.jump()));
+        break;
 
-        case Parser::A_COMMAND:
-            bool isNumeric;
-            address = m_parser.symbol().toUInt(&isNumeric);
-            if (!isNumeric)
-                address = m_symbolTable.getAddressWithAddEntry(m_parser.symbol());
-            m_srcToBinLines[m_parser.currentLine()] = m_binaryCode.length();
-            m_binToSrcLines[m_binaryCode.length()] = m_parser.currentLine();
-            m_binaryCode.append(QString::number(address, 2).rightJustified(16, '0'));
-            break;
+    case Parser::A_COMMAND:
+        bool isNumeric;
+        address = m_parser.symbol().toUInt(&isNumeric);
+        if (!isNumeric)
+            address = m_symbolTable.getAddressWithAddEntry(m_parser.symbol());
+        m_srcToBinLines[m_parser.currentLine()] = m_binaryCode.length();
+        m_binToSrcLines[m_binaryCode.length()] = m_parser.currentLine();
+        m_binaryCode.append(QString::number(address, 2).rightJustified(16, '0'));
+        break;
 
-        default:
-            break;
-        }
+    default:
+        break;
     }
 }

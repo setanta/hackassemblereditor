@@ -1,4 +1,3 @@
-#include <QDebug>
 #include <QtGlobal>
 #include "assemblercontroller.h"
 
@@ -6,8 +5,7 @@ AssemblerController::AssemblerController(QObject *parent)
    : QObject(parent),
      m_timer(NULL),
      m_speed(NORMAL),
-     m_state(NO_SOURCE),
-     m_currentLine(-1)
+     m_state(NO_SOURCE)
 {
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &AssemblerController::timerUpdate);
@@ -18,14 +16,13 @@ void AssemblerController::setSourceCode(const QString &asmSource)
     m_assembler.setSourceCode(asmSource);
     setState(asmSource.trimmed().isEmpty() ? NO_SOURCE : RESET);
     m_assembler.parse();
-    m_assembler.translate();
 }
 
 void AssemblerController::timerUpdate()
 {
+    translateNextLine();
     if (m_timer->interval() != timerInterval())
         m_timer->setInterval(timerInterval());
-    translateNextLine();
 }
 
 int AssemblerController::timerInterval()
@@ -37,21 +34,17 @@ int AssemblerController::timerInterval()
 
 void AssemblerController::translateNextLine()
 {
-    if (m_currentLine == m_assembler.binaryCode().length() - 1) {
+    m_assembler.translateNextLine();
+    if (m_assembler.hasMoreLines())
+        emit currentLineChanged(m_assembler.binaryCode().length() - 1);
+    else
         setState(FINISHED);
-    } else {
-        m_currentLine++;
-        emit currentLineChanged(m_currentLine);
-    }
 }
 
 void AssemblerController::setState(AssemblerController::State newState)
 {
     if (m_state == newState) return;
     m_state = newState;
-
-    if (m_state == NO_SOURCE || m_state == FINISHED || m_state == RESET)
-        m_currentLine = -1;
 
     if (m_state == RUNNING)
         m_timer->start(0);
@@ -63,8 +56,6 @@ void AssemblerController::setState(AssemblerController::State newState)
 
 void AssemblerController::run()
 {
-    qDebug() << "AssemblerController::run()" << m_state;
-//    m_assembler.translate();
     if (m_state == FINISHED)
         reset();
     setState(RUNNING);
@@ -72,13 +63,11 @@ void AssemblerController::run()
 
 void AssemblerController::pause()
 {
-    qDebug() << "AssemblerController::pause()";
     setState(PAUSED);
 }
 
 void AssemblerController::step()
 {
-    qDebug() << "AssemblerController::step()" << m_state;
     if (m_state == RUNNING || m_state == RESET)
         pause();
     else if (m_state == FINISHED)
@@ -88,13 +77,12 @@ void AssemblerController::step()
 
 void AssemblerController::reset()
 {
-    qDebug() << "AssemblerController::reset()";
+    m_assembler.clearTranslationData();
     setState(RESET);
 }
 
 void AssemblerController::translateAll()
 {
-//    m_assembler.translate();
-    setState(RESET);
+    m_assembler.translateAll();
     setState(FINISHED);
 }
