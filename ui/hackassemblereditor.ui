@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Hack Assembly Editor[*]</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../hackassemblereditor.qrc">
+    <normaloff>:/icons/app.png</normaloff>:/icons/app.png</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="1">

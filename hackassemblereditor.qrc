@@ -12,5 +12,6 @@
         <file alias="translate.png">images/go-next.png</file>
         <file alias="reset.png">images/process-stop.png</file>
         <file alias="copy.png">images/edit-copy.png</file>
+        <file alias="app.png">images/applications-development.png</file>
     </qresource>
 </RCC>
