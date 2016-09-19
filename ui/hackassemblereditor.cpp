@@ -40,8 +40,15 @@ HackAssemblerEditor::HackAssemblerEditor(QWidget *parent) :
             this, &HackAssemblerEditor::referenceCodeScrollMoved);
 
     QSettings settings;
-    openSourceFile(settings.value("editor/asmSrcPath", QString()).toString());
-    openReferenceBinaryFile(settings.value("editor/refBinPath", QString()).toString());
+
+    QString lastSourceFile = settings.value("editor/asmSrcPath", QString()).toString();
+    if (!lastSourceFile.isEmpty())
+        openSourceFile(lastSourceFile);
+
+    QString lastBinaryReferenceFile = settings.value("editor/refBinPath", QString()).toString();
+    if (!lastBinaryReferenceFile.isEmpty())
+        openReferenceBinaryFile(lastBinaryReferenceFile);
+
     ui->speedSlider->setValue(settings.value("assembler/speed", HackAssemblerEditor::DEFAULT_SPEED).toInt());
     restoreGeometry(settings.value("editor/geometry").toByteArray());
 
@@ -312,7 +319,6 @@ void HackAssemblerEditor::translatedCodeModelReset()
 
 QFileInfo HackAssemblerEditor::openSourceFile(const QString &filename)
 {
-
     QFileInfo fileInfo(filename);
     if (!fileInfo.exists())
         return fileInfo;
