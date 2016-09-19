@@ -182,13 +182,18 @@ void HackAssemblerEditor::on_action_About_triggered()
 void HackAssemblerEditor::cursorPositionChanged()
 {
     QList<QTextEdit::ExtraSelection> extraSelections;
-    QColor lineColor = QColor(Qt::yellow).lighter(160);
 
     QTextEdit::ExtraSelection selection;
-    selection.format.setBackground(lineColor);
+
     selection.format.setProperty(QTextFormat::FullWidthSelection, true);
     selection.cursor = ui->sourceTextEdit->textCursor();
     selection.cursor.clearSelection();
+
+    Qt::GlobalColor bgColor(Qt::yellow);
+    if (m_asmController->lineHasError(selection.cursor.blockNumber()))
+        bgColor = Qt::red;
+    QColor lineColor = QColor(bgColor).lighter(160);
+    selection.format.setBackground(lineColor);
 
     extraSelections.append(selection);
     ui->sourceTextEdit->setExtraSelections(extraSelections);
@@ -234,10 +239,36 @@ void HackAssemblerEditor::on_speedSlider_valueChanged(int value)
     m_asmController->setSpeed(AssemblerController::Speed(value));
 }
 
+void HackAssemblerEditor::on_errorButton_toggled(bool checked)
+{
+    QSizePolicy::Policy vertical = checked ? QSizePolicy::Fixed : QSizePolicy::Ignored;
+    ui->errorList->setSizePolicy(QSizePolicy::Expanding, vertical);
+}
+
+void HackAssemblerEditor::on_errorList_currentRowChanged(int currentRow)
+{
+    goToSourceLine(m_asmController->errors().at(currentRow).line);
+}
+
 void HackAssemblerEditor::on_sourceTextEdit_textChanged()
 {
     setWindowModified(ui->sourceTextEdit->document()->isModified());
     m_asmController->setSourceCode(ui->sourceTextEdit->toPlainText());
+
+    const Assembler::ErrorList& errors = m_asmController->errors();
+    ui->errorList->clear();
+    ui->errorButton->setEnabled(!errors.empty());
+
+    cursorPositionChanged();
+
+    if (errors.empty()) {
+        ui->errorButton->setChecked(false);
+    } else {
+        for (const Assembler::Error& error : m_asmController->errors()) {
+            QString formattedLine = QString::number(error.line + 1).rightJustified(3, ' ');
+            ui->errorList->addItem(QString("%1: %2").arg(formattedLine).arg(error.message));
+        }
+    }
 }
 
 void HackAssemblerEditor::asmControllerStateChanged(AssemblerController::State newState)
@@ -333,8 +364,6 @@ QFileInfo HackAssemblerEditor::openSourceFile(const QString &filename)
     QGuiApplication::setApplicationDisplayName(fileInfo.fileName());
     setWindowModified(ui->sourceTextEdit->document()->isModified());
 
-    m_asmController->setSourceCode(ui->sourceTextEdit->toPlainText());
-
     return fileInfo;
 }
 
@@ -411,14 +440,8 @@ void HackAssemblerEditor::on_translatedCode_currentRowChanged(int currentRow)
         ui->referenceCode->setCurrentRow(newRow);
 
     int sourceLine = m_asmController->sourceLineForBinaryLine(ui->translatedCode->currentRow());
-    if (sourceLine == -1)
-        return;
-
-    QTextCursor cursor = ui->sourceTextEdit->textCursor();
-    cursor.setPosition(sourceLine);
-    cursor.movePosition(QTextCursor::Start);
-    cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, sourceLine);
-    ui->sourceTextEdit->setTextCursor(cursor);
+    if (sourceLine > -1)
+        goToSourceLine(sourceLine);
 }
 
 void HackAssemblerEditor::on_referenceCode_currentRowChanged(int currentRow)
@@ -509,4 +532,13 @@ bool HackAssemblerEditor::saveSource(const QString& filename)
     ui->sourceTextEdit->document()->setModified(false);
     setWindowModified(false);
     return true;
+}
+
+void HackAssemblerEditor::goToSourceLine(int sourceLine)
+{
+    QTextCursor cursor = ui->sourceTextEdit->textCursor();
+    cursor.setPosition(sourceLine);
+    cursor.movePosition(QTextCursor::Start);
+    cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, sourceLine);
+    ui->sourceTextEdit->setTextCursor(cursor);
 }

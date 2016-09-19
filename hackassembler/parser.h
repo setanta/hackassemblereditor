@@ -30,7 +30,7 @@ public:
     const QString& jump() const { return m_jump; }
     const QString& error() const { return m_error; }
 
-    bool hasError() const { return m_error.isEmpty(); }
+    inline bool hasError() const { return !m_error.isEmpty(); }
 
 private:
     void clearParseData();

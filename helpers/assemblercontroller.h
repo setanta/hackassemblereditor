@@ -33,6 +33,9 @@ public:
     void setSourceCode(const QString& asmSource);
     const QStringList& binaryCode() const { return m_assembler.binaryCode(); }
 
+    const Assembler::ErrorList& errors() const { return m_assembler.errors(); }
+    bool lineHasError(int line) const;
+
     int sourceLineForBinaryLine(int line) { return m_assembler.sourceLineForBinaryLine(line); }
     int binaryLineForSourceLine(int line) { return m_assembler.binaryLineForSourceLine(line); }
 

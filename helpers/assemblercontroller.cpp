@@ -18,6 +18,17 @@ void AssemblerController::setSourceCode(const QString &asmSource)
     m_assembler.parse();
 }
 
+bool AssemblerController::lineHasError(int line) const
+{
+    if (m_assembler.errors().isEmpty())
+        return false;
+    for (const Assembler::Error& error : m_assembler.errors()) {
+        if (error.line == line)
+            return true;
+    }
+    return false;
+}
+
 void AssemblerController::timerUpdate()
 {
     translateNextLine();

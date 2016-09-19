@@ -43,6 +43,8 @@ private slots:
     void on_action_TranslateAll_triggered();
 
     void on_speedSlider_valueChanged(int value);
+    void on_errorButton_toggled(bool checked);
+    void on_errorList_currentRowChanged(int currentRow);
 
     void on_sourceTextEdit_textChanged();
 
@@ -79,6 +81,8 @@ private:
     bool handleSourceSaving();
     bool saveSourceAs();
     bool saveSource(const QString& filename);
+
+    void goToSourceLine(int sourceLine);
 
     static const int DEFAULT_SPEED;
 

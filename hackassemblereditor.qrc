@@ -13,5 +13,6 @@
         <file alias="reset.png">images/process-stop.png</file>
         <file alias="copy.png">images/edit-copy.png</file>
         <file alias="app.png">images/applications-development.png</file>
+        <file alias="error.png">images/dialog-error.png</file>
     </qresource>
 </RCC>

@@ -22,7 +22,6 @@ public:
     const QStringList& asmSrcCode() const { return m_parser.asmSource(); }
     const QStringList& binaryCode() const { return m_binaryCode; }
 
-    bool hasErrors() const { return !m_errors.isEmpty(); }
     const ErrorList& errors() const { return m_errors; }
 
     int sourceLineForBinaryLine(int binaryLineNumber);
