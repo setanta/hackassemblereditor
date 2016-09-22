@@ -14,5 +14,9 @@
         <file alias="copy.png">images/edit-copy.png</file>
         <file alias="app.png">images/applications-development.png</file>
         <file alias="error.png">images/dialog-error.png</file>
+        <file alias="help.png">images/help-browser.png</file>
+    </qresource>
+    <qresource prefix="/docs">
+        <file>hacklang.html</file>
     </qresource>
 </RCC>

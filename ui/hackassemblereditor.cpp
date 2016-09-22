@@ -14,6 +14,7 @@ const int HackAssemblerEditor::DEFAULT_SPEED = 2;
 HackAssemblerEditor::HackAssemblerEditor(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_hackAsmHelp(NULL),
     m_about(NULL)
 {
     ui->setupUi(this);
@@ -177,6 +178,13 @@ void HackAssemblerEditor::on_action_About_triggered()
     if (!m_about)
         m_about = new AboutDialog(this);
     m_about->show();
+}
+
+void HackAssemblerEditor::on_action_HackAsmHelp_triggered()
+{
+    if (!m_hackAsmHelp)
+        m_hackAsmHelp = new HackAssemblyHelp(this);
+    m_hackAsmHelp->show();
 }
 
 void HackAssemblerEditor::cursorPositionChanged()

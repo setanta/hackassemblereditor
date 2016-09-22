@@ -6,6 +6,7 @@
 #include <QMainWindow>
 
 #include "aboutdialog.h"
+#include "hackassemblyhelp.h"
 #include "helpers/assemblercontroller.h"
 #include "helpers/hacksyntaxhighlighter.h"
 
@@ -34,6 +35,7 @@ private slots:
 
     void on_action_Exit_triggered();
     void on_action_About_triggered();
+    void on_action_HackAsmHelp_triggered();
 
     void on_action_RunPauseTranslation_triggered(bool checked);
     void on_action_RunPauseTranslation_toggled(bool checked);
@@ -88,6 +90,7 @@ private:
     static const int DEFAULT_SPEED;
 
     Ui::MainWindow *ui;
+    HackAssemblyHelp *m_hackAsmHelp;
     AboutDialog *m_about;
 
     AssemblerController* m_asmController;

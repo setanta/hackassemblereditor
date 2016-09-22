@@ -16,6 +16,10 @@
   <property name="windowTitle">
    <string>About Hack Assembly Editor</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../hackassemblereditor.qrc">
+    <normaloff>:/icons/help.png</normaloff>:/icons/help.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <widget class="QLabel" name="label_2">

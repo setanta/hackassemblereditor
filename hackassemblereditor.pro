@@ -20,6 +20,7 @@ SOURCES += main.cpp \
     helpers/assemblercontroller.cpp \
     helpers/hacksyntaxhighlighter.cpp \
     ui/aboutdialog.cpp \
+    ui/hackassemblyhelp.cpp \
     ui/hackassemblereditor.cpp
 
 HEADERS  += \
@@ -30,10 +31,12 @@ HEADERS  += \
     helpers/assemblercontroller.h \
     helpers/hacksyntaxhighlighter.h \
     ui/aboutdialog.h \
+    ui/hackassemblyhelp.h \
     ui/hackassemblereditor.h
 
 FORMS    += \
     ui/aboutdialog.ui \
+    ui/hackassemblyhelp.ui \
     ui/hackassemblereditor.ui
 
 RESOURCES += \
