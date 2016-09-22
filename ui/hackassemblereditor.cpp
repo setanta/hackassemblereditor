@@ -247,7 +247,15 @@ void HackAssemblerEditor::on_errorButton_toggled(bool checked)
 
 void HackAssemblerEditor::on_errorList_currentRowChanged(int currentRow)
 {
+    if (currentRow < 0 || m_asmController->errors().empty())
+        return;
     goToSourceLine(m_asmController->errors().at(currentRow).line);
+}
+
+void HackAssemblerEditor::on_errorList_itemActivated(QListWidgetItem *item)
+{
+    goToSourceLine(m_asmController->errors().at(ui->errorList->row(item)).line);
+    ui->sourceTextEdit->setFocus();
 }
 
 void HackAssemblerEditor::on_sourceTextEdit_textChanged()
@@ -332,8 +340,10 @@ void HackAssemblerEditor::asmControllerCurrentLineChanged(int line)
         ui->translatedCode->setCurrentRow(line);
 }
 
-void HackAssemblerEditor::translatedCodeModelChanged(const QModelIndex &, int, int last)
+void HackAssemblerEditor::translatedCodeModelChanged(const QModelIndex &parent, int first, int last)
 {
+    Q_UNUSED(parent);
+    Q_UNUSED(first);
     ui->action_SaveTranslatedBinary->setEnabled(true);
     ui->saveHackBinaryButton->setEnabled(true);
     ui->copyTranslatedButton->setEnabled(true);
@@ -428,8 +438,9 @@ void HackAssemblerEditor::clearReferenceCodeBinDiff()
     }
 }
 
-void HackAssemblerEditor::on_translatedCode_itemActivated(QListWidgetItem *)
+void HackAssemblerEditor::on_translatedCode_itemActivated(QListWidgetItem *item)
 {
+    Q_UNUSED(item);
     ui->sourceTextEdit->setFocus();
 }
 
@@ -540,5 +551,6 @@ void HackAssemblerEditor::goToSourceLine(int sourceLine)
     cursor.setPosition(sourceLine);
     cursor.movePosition(QTextCursor::Start);
     cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, sourceLine);
+    cursor.movePosition(QTextCursor::EndOfLine);
     ui->sourceTextEdit->setTextCursor(cursor);
 }

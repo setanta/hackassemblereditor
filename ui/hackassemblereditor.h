@@ -45,6 +45,7 @@ private slots:
     void on_speedSlider_valueChanged(int value);
     void on_errorButton_toggled(bool checked);
     void on_errorList_currentRowChanged(int currentRow);
+    void on_errorList_itemActivated(QListWidgetItem *item);
 
     void on_sourceTextEdit_textChanged();
 
