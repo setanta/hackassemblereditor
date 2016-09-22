@@ -10,4 +10,11 @@ namespace Code
     QString comp(QString mnemonic);
 }
 
+namespace DisAsm
+{
+    QString dest(const QString &code);
+    QString jump(const QString &code);
+    QString comp(const QString &code);
+}
+
 #endif // CODE_H

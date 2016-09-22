@@ -20,6 +20,25 @@ QString Code::dest(QString mnemonic)
            QString::number(mnemonic.count('M'));
 }
 
+QString DisAsm::dest(const QString &code)
+{
+    if (code == "001")
+        return "M";
+    else if (code == "010")
+        return "D";
+    else if (code == "011")
+        return "MD";
+    else if (code == "100")
+        return "A";
+    else if (code == "101")
+        return "AM";
+    else if (code == "110")
+        return "AD";
+    else if (code == "111")
+        return "AMD";
+    return QString();
+}
+
 /**
  * jump   j1 j2 j3
  * ---------------
@@ -50,6 +69,25 @@ QString Code::jump(QString mnemonic)
     else if (mnemonic == "JMP")
         return "111";
     return "000";
+}
+
+QString DisAsm::jump(const QString &code)
+{
+    if (code == "001")
+        return "JGT";
+    else if (code == "010")
+        return "JEQ";
+    else if (code == "011")
+        return "JGE";
+    else if (code == "100")
+        return "JLT";
+    else if (code == "101")
+        return "JNE";
+    else if (code == "110")
+        return "JLE";
+    else if (code == "111")
+        return "JMP";
+    return QString();
 }
 
 /**
@@ -128,4 +166,65 @@ QString Code::comp(QString mnemonic)
         code[0] = '1';
 
     return code;
+}
+
+QString DisAsm::comp(const QString &code)
+{
+    if (code == "0000000")
+        return "D&A";
+    else if (code == "0000010")
+        return "D+A";
+    else if (code == "0000111")
+        return "A-D";
+    else if (code == "0001100")
+        return "D";
+    else if (code == "0001101")
+        return "!D";
+    else if (code == "0001110")
+        return "D-1";
+    else if (code == "0001111")
+        return "-D";
+    else if (code == "0010011")
+        return "D-A";
+    else if (code == "0010101")
+        return "D|A";
+    else if (code == "0011111")
+        return "D+1";
+    else if (code == "0101010")
+        return "0";
+    else if (code == "0110000")
+        return "A";
+    else if (code == "0110001")
+        return "!A";
+    else if (code == "0110010")
+        return "A-1";
+    else if (code == "0110011")
+        return "-A";
+    else if (code == "0110111")
+        return "A+1";
+    else if (code == "0111010")
+        return "-1";
+    else if (code == "0111111")
+        return "1";
+    else if (code == "1000000")
+        return "D&M";
+    else if (code == "1000010")
+        return "D+M";
+    else if (code == "1000111")
+        return "M-D";
+    else if (code == "1010011")
+        return "D-M";
+    else if (code == "1010101")
+        return "D|M";
+    else if (code == "1110000")
+        return "M";
+    else if (code == "1110001")
+        return "!M";
+    else if (code == "1110010")
+        return "M-1";
+    else if (code == "1110011")
+        return "-M";
+    else if (code == "1110111")
+        return "M+1";
+    return QString();
 }
