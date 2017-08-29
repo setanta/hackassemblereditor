@@ -1,6 +1,37 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
 <html>
-<head></head>
+<head>
+<style type="text/css">
+body {
+  background-color: linen;
+}
+
+h1, h2, h3 {
+  color: maroon;
+  text-decoration: underline;
+}
+
+h4 {
+  color: maroon;
+  text-decoration: none;
+  padding-bottom: 10px;
+}
+
+pre.codeblock {
+  width: 320px;
+  border: 1px solid maroon;
+  background-color: white;
+}
+
+table {
+  border: 1px solid maroon;
+}
+
+td {
+  width: 120px;
+}
+</style>
+</head>
 <body>
 
 <h1>Hack Assembly Language</h1>
@@ -18,11 +49,100 @@
 <p>D+1</p>
 
 <h3>Symbols</h3>
-<ul>
-<li>Predefined: <pre>SP, LCL, ...</pre></li>
-<li>Labels: <pre>(XXX)</pre></li>
-<li>Variables: <pre>@xxx</pre></li>
-</ul>
+
+<h4>Predefined Symbols</h4>
+
+<table>
+  <tr><td><b>Label</b></td><td><b>RAM</b></td><td><b>address (hexa)</b></td></tr>
+  <tr><td>SP</td><td>0</td><td>0x0000</td></tr>
+  <tr><td>LCL</td><td>1</td><td>0x0001</td></tr>
+  <tr><td>ARG</td><td>2</td><td>0x0002</td></tr>
+  <tr><td>THIS</td><td>3</td><td>0x0003</td></tr>
+  <tr><td>THAT</td><td>4</td><td>0x0004</td></tr>
+  <tr><td>R0-R15</td><td>0-15</td><td>0x0000-f</td></tr>
+  <tr><td>SCREEN</td><td>16384</td><td>16384</td></tr>
+  <tr><td>KBD</td><td>24576</td><td>0x6000</td></tr>
+  </tbody>
+</table>
+
+<h4>Labels Symbols</h4>
+
+<pre>(XXX)</pre>
+
+<p>The pseudo-command <b>(XXX)</b> defines the symbol <b>(XXX)</b> to refer to the
+instruction memory location holding the next command in the program. A label can
+be defined only once and can be used anywhere in the assembly program, even before
+the line in which it is defined.</p>
+
+<h4>Variables Symbols</h4>
+
+<pre>@xxx</pre>
+
+<p>Any symbol <b>xxx</b> appearing in an assembly program that is
+not predefined and is not defined elsewhere using the <b>(XXX)</b> command is treated as
+a variable. Variables are mapped to consecutive memory locations as they are first
+encountered, starting at RAM address 16 <b>(0x0010)</b>.</p>
+
+<h3>Example</h3>
+
+<pre><b><u>Sum.asm</u></b></pre>
+<pre class="codeblock">
+// Computes sum=1+...+100.
+
+  @i    // i=1
+  M=1
+
+  @sum  // sum=0
+  M=0
+
+(LOOP)
+  @i    // if (i-100)=0 goto END
+  D=M
+  @100
+  D=D-A
+  @END
+  D;JGT
+
+  @i    // sum+=i
+  D=M
+  @sum
+  M=D+M
+
+  @i    // i++
+  M=M+1
+
+  @LOOP // goto LOOP
+  0;JMP
+
+(END)   // infinite loop
+  @END
+  0;JMP
+</pre>
+
+
+<pre><b><u>Compiled Sum.hack</u></b></pre>
+<pre class="codeblock">
+0000 0000 0001 0000
+1110 1111 1100 1000
+0000 0000 0001 0001
+1110 1010 1000 1000
+0000 0000 0001 0000
+1111 1100 0001 0000
+0000 0000 0110 0100
+1110 0100 1101 0000
+0000 0000 0001 0010
+1110 0011 0000 0001
+0000 0000 0001 0000
+1111 1100 0001 0000
+0000 0000 0001 0001
+1111 0000 1000 1000
+0000 0000 0001 0000
+1111 1101 1100 1000
+0000 0000 0000 0100
+1110 1010 1000 0111
+0000 0000 0001 0010
+1110 1010 1000 0111
+</pre>
 
 </body>
 </html>
